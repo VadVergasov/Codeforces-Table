@@ -1,0 +1,99 @@
+<!--
+Main page template  Copyright (C) 2021  Vadim Vergasov
+This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
+This is free software, and you are welcome to redistribute it
+under certain conditions; type `show c' for details.
+-->
+<html>
+
+<head>
+    <title>{{title}}</title>
+</head>
+
+<body>
+    <script type=text/javascript>
+        function setContest() {
+            var number = document.getElementById("contest");
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                var span = document.getElementById("contest_status");
+                if (this.readyState == 4 && this.status == 200) {
+                    span.innerHTML = "OK";
+                    span.style.color = "green";
+                    getCountries();
+                } else if (this.readyState == 4) {
+                    span.innerHTML = "Error";
+                    span.style.color = "red";
+                } else if (this.readyState == 3 || this.readyState == 2 || this.readyState == 1) {
+                    span.innerHTML = "Processing";
+                    span.style.color = "orange";
+                }
+            }
+            xmlhttp.open("POST", "/set_contest");
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("contest=" + number.value);
+        }
+
+        function getCountries() {
+            var txt = "";
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                var span = document.getElementById("country_status");
+                if (this.readyState == 4 && this.status == 200) {
+                    myObj = JSON.parse(this.responseText);
+                    txt += "<select id='selected' name='country' onchange='getStandings();'>"
+                    for (x in myObj) {
+                        txt += "<option>" + myObj[x];
+                    }
+                    txt += "</select>"
+                    document.getElementById("drop-down").innerHTML = txt;
+                    span.innerHTML = "OK";
+                    span.style.color = "green";
+                } else if (this.readyState == 4) {
+                    span.innerHTML = "Error";
+                    span.style.color = "red";
+                } else if (this.readyState == 3 || this.readyState == 2 || this.readyState == 1) {
+                    span.innerHTML = "Processing";
+                    span.style.color = "orange";
+                }
+            }
+            xmlhttp.open("POST", "/get_countries");
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send();
+        }
+
+        function getStandings() {
+            var txt = "";
+            var select = document.getElementById("selected");
+            var country = select.options[select.selectedIndex].text;
+            xmlhttp = new XMLHttpRequest();
+            xmlhttp.onreadystatechange = function() {
+                if (this.readyState == 4 && this.status == 200) {
+                    myObj = JSON.parse(this.responseText);
+                    txt += "<tbody><tr><th>Place</th><th>Handle</th></tr>";
+                    for (x in myObj) {
+                        txt += "<tr><td>" + myObj[x].place + "</td><td>" + myObj[x].handle + "</td></tr>";
+                    }
+                    txt += "</tbody>";
+                    document.getElementById("results").innerHTML = txt;
+                }
+            }
+            xmlhttp.open("POST", "/get_standings");
+            xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+            xmlhttp.send("country=" + country);
+        }
+    </script>
+    <h1>Contest id:</h1>
+    <input type="number" id="contest">
+    <br>
+    <input type="button" value="OK" onclick="setContest();">
+    <span id="contest_status" style="color:red">No contest</span>
+    <h1>Country:</h1>
+    <span id="country_status" style="color:red">No countries</span>
+    <p id="drop-down">
+    </p>
+    <table id="results">
+    </table>
+</body>
+
+</html>
